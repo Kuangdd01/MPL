@@ -12,6 +12,7 @@ demo.py
 Fmodel.py
 case.py
 unicom/
+CLIP/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
