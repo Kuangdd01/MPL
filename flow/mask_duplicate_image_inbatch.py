@@ -3,7 +3,8 @@ from einops import rearrange, repeat
 from torch.nn import functional as F
 def get_duplicate_mask(image_id, output, device='cpu'):
     """
-    image_id: list
+    image_id: id list of batch image
+    output: 
 
     """
     b = output.shape[0]
@@ -71,8 +72,6 @@ def get_visualization_masked_label_query(mask: torch.Tensor, x_mask: torch.Tenso
     # print("mask mean number for every sentence query: {}".format(mask.sum(dim=-1).mean(dim=-1)))
     print("mask number:{}".format(mask.sum() / phrase_mask.sum()))
     mask = rearrange(mask, 'b q (a k) -> b a q k', b=mask.shape[0], q=mask.shape[1], k=x_mask.shape[-1], a=mask.shape[0])
-    # import ipdb
-    # ipdb.set_trace()
     valid_mask = mask * x_mask.unsqueeze(0)
     print("valid mask number:{}".format(valid_mask.sum() / phrase_mask.sum()))
     # [b q bk]
@@ -85,11 +84,9 @@ def get_visualization_masked_label_query(mask: torch.Tensor, x_mask: torch.Tenso
     assert image_id_.shape[0] == mask.shape[0] * x_mask.shape[-1]
 
     return_list = {}
-    # print(phrases)
     for i, batch_tensor in enumerate(valid_mask):
         return_list[i] = {}
         for j, query_tensor in enumerate(batch_tensor):
-            # bbox_list = []
             if phrase_mask[i][j]:
                 position_tensor = query_tensor.nonzero()  # [bk] ->[s,1] box:[bk,4]
                 if position_tensor.shape[0] == 0:
@@ -117,30 +114,3 @@ def get_visualization_masked_label_query(mask: torch.Tensor, x_mask: torch.Tenso
         # print(return_list[i])
     return return_list
 
-
-
-def _test():
-    lf = torch.randn(3,3,4)
-    li = torch.tensor([[1, 2, 3],[4, 1, 2],[5, 2, 1]])
-    qe = torch.randn(3,2,4)
-    re = torch.randn(3,3,4)
-    print(get_same_label_mask(lf,li,qe))
-
-if __name__ == "__main__":
-    # _test()
-    ot = torch.randn(4,4,32,100)
-    img_id = [1,1,2,2]
-    # print(get_duplicate_mask(img_id, ot))
-    msk = get_duplicate_mask(img_id, ot)
-    print(msk)
-    print(msk.shape)
-    # msk.unsqueeze_(-1)
-    # msk = repeat(msk, 'b1 b2-> b1 b2 q k',b1=5,b2=5, q=6, k=7)
-    # msk = msk.repeat(5,5,6)
-    # print(msk)
-    # print(msk.shape)
-    # print(msk[0][1])
-    # s = torch.randn(5,5,6,7)
-    # s.masked_fill_(msk, -1)
-    # print(s)
-    # print(s[0][0],s[0][1])

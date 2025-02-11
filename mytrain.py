@@ -1,12 +1,6 @@
-# ==================================================================================================================== #
-#                                           make slrum work with local import                                          #
-#                              refer to https://stackoverflow.com/a/39574373/16534997                                  #
 import sys, os
-
 sys.path.append(os.getcwd())
-# ==================================================================================================================== #
 os.environ['CUDA_LAUNCH_BLOCKING']='1'
-
 import json
 import os
 import pathlib
@@ -36,7 +30,7 @@ from flow.inner_similarity import get_mask_similarity_matrix_by_threshold
 torch.autograd.set_detect_anomaly(True)
 
 parser = argparse.ArgumentParser(
-    description='mat use em refine confidence adapted from PiCO',
+    description='wspg args',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter
 )
 parser.add_argument('--debug', action='store_true')
@@ -46,12 +40,10 @@ parser.add_argument('--gpu', default=None, type=int,
                     help='GPU id to use.')
 parser.add_argument('--resume', default='', type=str,
                     help='path to latest checkpoint (default: none)')
-
 parser.add_argument('--exp-dir', default='experiment/mat', type=str,
                     help='experiment directory for saving checkpoints and logs')
 parser.add_argument('--conf_ema_range', default='0.95,0.8', type=str,
                     help='pseudo target updating coefficient (phi)')
-
 # phrase -> flickr; refer -> refercoco/+/g
 parser.add_argument('--task', default='phrase')
 # glove.txt dir
@@ -68,19 +60,14 @@ parser.add_argument('--features_path', default='')
 parser.add_argument('--dataset_name', default='')
 # maf features dir
 parser.add_argument('--mat_root', default='')
-
-
 parser.add_argument('--batch_size', default=256, type=int)
 parser.add_argument('--num_workers', default=2, type=int)
 parser.add_argument('--prefetch_factor', default=2, type=int)
-
 parser.add_argument('--epochs', default=100, type=int,
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int,
                     help='manual epoch number (useful on restarts)')
-
 parser.add_argument('--threshold', default=0.8, type=float, help='inner sim threshold')
-
 parser.add_argument('--lr', '--learning-rate', default=5e-4, type=float,
                     metavar='LR', help='initial learning rate', dest='lr')
 parser.add_argument('--lr_decay_epochs', type=str, default='40,70',
@@ -96,17 +83,13 @@ parser.add_argument('--momentum', default=0, type=float, metavar='M',
 parser.add_argument('--wd', '--weight-decay', default=0, type=float,
                     dest='weight_decay')
 parser.add_argument('--clip_norm', type=float, default=0)
-
 parser.add_argument('-p', '--print-freq', default=100, type=int,
                     help='print frequency (default: 100)')
-
 parser.add_argument('--temperature', default=1, type=float)
 parser.add_argument('--base_temperature', default=1, type=float)
-
 parser.add_argument('--do_topk', action='store_true')
 parser.add_argument('--topk_values', type=str, default='30,15,8,4')
 parser.add_argument('--topk_epochs', type=str, default='15,30,50,80')
-
 parser.add_argument('--dropout', type=float, default=0.0)
 parser.add_argument('--v_feature_dropout_prob', type=float, default=0.0)
 parser.add_argument('--normalize_feature', action='store_true')
@@ -116,31 +99,24 @@ parser.add_argument('--sum_scale', type=float, default=12.0)
 parser.add_argument('--reduce_method', type=str, default='sum')
 parser.add_argument('--no_contrastive', action='store_true')
 parser.add_argument('--neg_num', type=int, default=None)
-
 parser.add_argument('--var_t', action='store_true')
 parser.add_argument('--mask', type=str, default='label')
 parser.add_argument('--p_temperature', type=float, default=1.0)
-
 parser.add_argument('--momentum_m', type=float, default=0.995)
-
 parser.add_argument('--fixed_pt', action='store_true')
 parser.add_argument('--convert', action='store_true')
 parser.add_argument('--falsenegative', action='store_true')
-
 parser.add_argument('--backbone', type=str, default='')
-
-
 
 
 def main():
     args = parser.parse_args()
-    model_path = '{task}_{arch}lr_{lr}_ep_{ep}_sd_{seed}_dp_{dp}_bs_{bs}_th{th}'.format(
+    model_path = '{task}_{arch}_lr_{lr}_ep_{ep}_sd_{seed}_dp_{dp}_bs_{bs}_th{th}'.format(
         task=args.task,
         arch=args.arch,
         lr=args.lr,
         ep=args.epochs,
         seed=args.seed,
-        soft_init='softinit_' if args.soft_init else '',
         hard='hard' if args.hard else 'soft',
         ema=args.conf_ema_range,
         t=args.temperature,
@@ -151,8 +127,6 @@ def main():
         th=args.threshold
     )
     print(model_path)
-    # mkdir
-    #breakpoint()
     save_root = os.path.join(args.exp_dir, model_path)
     i = 0
     while pathlib.Path(f"{save_root}_{i}").exists():
@@ -191,10 +165,7 @@ def main():
         args.device = 'cuda:{}'.format(args.gpu)
     else:
         args.device = 'cpu'
-    # show final args
     print(args)
-    #breakpoint()
-    # main_worker
     main_worker(args)
 
 
@@ -289,13 +260,13 @@ def main_worker(args):
                     f'Test Acc {acc_test}\n')
         return
 
-    n = len(train_loader.dataset)
-    max_phrase_num = train_loader.dataset.max_phrase_num
-    max_region_num = train_loader.dataset.max_region_num
-    phrase_mask = len2mask(train_loader.dataset.num_phrase, (n, max_phrase_num)).float()
-    region_confidence = len2mask(train_loader.dataset.num_obj, (n, max_region_num)).float() / train_loader.dataset.num_obj.unsqueeze(-1)
-    confidence = einsum('b q, b k -> b q k', phrase_mask, region_confidence)
-
+    # n = len(train_loader.dataset)
+    # max_phrase_num = train_loader.dataset.max_phrase_num
+    # max_region_num = train_loader.dataset.max_region_num
+    # phrase_mask = len2mask(train_loader.dataset.num_phrase, (n, max_phrase_num)).float()
+    # region_confidence = len2mask(train_loader.dataset.num_obj, (n, max_region_num)).float() / train_loader.dataset.num_obj.unsqueeze(-1)
+    # confidence = einsum('b q, b k -> b q k', phrase_mask, region_confidence)
+    
     loss_fn = WSLoss(conf_ema_m=args.conf_ema_range[0],
                       hard=args.hard,
                       temperature=args.temperature,
@@ -315,7 +286,7 @@ def main_worker(args):
         else:
             target_topk = None
         train(model, train_loader, loss_fn, optimizer, epoch, args, args.writer, update_conf=update_conf,
-              target_topk=target_topk, device=args.device, glove_tk=gloveTokenizer)
+              target_topk=target_topk, device=args.device)
         acc_eval = val(model, eval_loader, args, epoch, args.writer, device=args.device, prefix='eval')
         if isinstance(test_loader, list):
             acc_test = []
