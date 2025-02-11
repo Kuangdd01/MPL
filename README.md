@@ -1,9 +1,5 @@
-<!-- # TODO -->
-<!-- 1. add requirements -->
-<!-- 2. add quick start of run experiment -->
-<!-- 3. add link of features -->
 # Momentum Pseudo-Labeling for Weakly Supervised Phrase Grounding
-Implementation of MPL: Momentum Pseudo-Labeling for Weakly Supervised Phrase Grounding.
+Implementation of MPL: Momentum Pseudo-Labeling for Weakly Supervised Phrase Grounding.[ [Paper](-) | [Appendix](assets/AAAI2025_MPL_appendix.pdf) ]
 
 Some of our code is based on MAF & CLEM & volta. Thanks to their excellent works!!
 
